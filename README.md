@@ -81,3 +81,26 @@ How would this affect the current plan upgrade calculation?
 
 ### answer here:
 ---
+
+To accommodate add number of default users and price per user, we need to update users, plans tables.
+users table have teamId NULLABLE column, user initially can create and can be part of team, and can add multiple users to team, so it will be team can have multiple users relation, secondly defaultUsers and pricePriceUser column will be added to plans table, if the number of user in team is less than the defaultUsers then default plan price will be implemented, if the number of user excced the defaultUsers then additional cost will be calculate according to pricePerUser. e,g
+
+Plans {
+    id int
+    price float
+    defaultUsers int
+    pricePerUser float
+}{
+    1
+    5
+    5
+    2
+}
+
+team has 10 users
+
+additional cost
+
+additionalUser : len(team) - defaultUsers
+
+additionalCost : additionalUser * pricePerUser

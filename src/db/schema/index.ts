@@ -4,6 +4,7 @@ import {
   text,
   uniqueIndex,
   integer,
+  real
 } from "drizzle-orm/sqlite-core";
 const boolean = (col: string) => integer(col, { mode: "boolean" });
 const timestamp = (col: string) => integer(col, { mode: "timestamp" });
@@ -94,18 +95,88 @@ export const teamsRelations = relations(teams, ({ one }) => ({
   }),
 }));
 
-// export const plans = sqliteTable("plans", {
-// todo: add plans table schema
-// });
+export const plans = sqliteTable(
+  "plans",  
+  {
+    id: integer("id").primaryKey().notNull(),
+    name: text("name").notNull(),
+    price: real("price").default(0).notNull(),
+    createdAt: timestamp("createdAt").notNull(),
+    updatedAt: timestamp("updatedAt").notNull(),
+  },
+  (table) => {
+    return {
+      nameIdx: uniqueIndex("nameIdx").on(table.name),
+    };
+  }
+);
 
-// export const subscriptions = sqliteTable("subscriptions", {
-//   // todo: add subscriptions table schema
-// });
+export const subscriptions = sqliteTable(
+  "subscriptions", 
+  {
+    id: integer("id").primaryKey().notNull(),
+    planId: integer("planId").notNull()
+    .references(() => plans.id, { onDelete: "restrict", onUpdate: "restrict" }),
+    teamId: integer("teamId").notNull()
+    .references(() => teams.id, { onDelete: "restrict", onUpdate: "restrict" }),
+    status:text("status",{ enum: ["ACTIVE", "INACTIVE"] }),
+    createdAt: timestamp("createdAt").notNull(),
+    updatedAt: timestamp("updatedAt").notNull(),
+});
 
-// export const orders = sqliteTable("orders", {
-//   // todo: add orders table schema
-// });
 
-// export const subscriptionActivations = sqliteTable("subscriptionActivations", {
-//   // todo: add subscriptionActivations table schema
-// });
+export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
+  plan: one(plans, {
+    fields: [subscriptions.planId],
+    references: [plans.id],
+  }),
+  team: one(teams, {
+    fields: [subscriptions.teamId],
+    references: [teams.id],
+  }),
+}));
+
+export const orders = sqliteTable(
+  "orders", 
+  {
+    id: integer("id").primaryKey().notNull(),
+    subscriptionId: integer("subscriptionId").notNull()
+    .references(() => subscriptions.id, { onDelete: "restrict", onUpdate: "restrict" }),
+    userId: integer("userId").notNull()
+    .references(() => users.id, { onDelete: "restrict", onUpdate: "restrict" }),
+    status:text("status",{ enum: ["PAID", "UNPAID"] }),
+    amount: real("amount").default(0).notNull(),
+    createdAt: timestamp("createdAt").notNull(),
+    updatedAt: timestamp("updatedAt").notNull(),
+});
+
+
+export const ordersRelations = relations(orders, ({ one }) => ({
+  subscriptions: one(subscriptions, {
+    fields: [orders.subscriptionId],
+    references: [subscriptions.id],
+  }),
+  users: one(users, {
+    fields: [orders.userId],
+    references: [users.id],
+  }),
+}));
+
+export const subscriptionActivations = sqliteTable(
+  "subscriptionActivations", 
+  {
+    id: integer("id").primaryKey().notNull(),
+    subscriptionId: integer("subscriptionId").notNull()
+    .references(() => subscriptions.id, { onDelete: "restrict", onUpdate: "restrict" }),
+    startAt: timestamp("startAt").notNull(),
+    endAt: timestamp("endAt").notNull(),
+    createdAt: timestamp("createdAt").notNull(),
+    updatedAt: timestamp("updatedAt").notNull(),
+});
+
+export const subscriptionActivationsRelations = relations(subscriptionActivations, ({ one }) => ({
+  subscription: one(subscriptions, {
+    fields: [subscriptionActivations.subscriptionId],
+    references: [subscriptions.id],
+  }),
+}));
